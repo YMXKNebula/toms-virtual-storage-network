@@ -1,0 +1,11 @@
+.gradle/
+.gradle-home/
+build/
+run/
+tools/jdk*/
+tools/*.zip
+vendor/
+.local/
+dist/
+docs/tvsn/reports/
+docs/release-reports/

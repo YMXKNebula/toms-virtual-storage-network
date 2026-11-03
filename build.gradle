@@ -1,0 +1,139 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.16.3'
+}
+
+version = '1.0.0'
+group = 'dev.tpc'
+base { archivesName = 'toms-virtual-storage-network-26.3' }
+
+repositories { maven { url = uri('vendor/maven') }; maven { url = 'https://maven.fabricmc.net/' }; mavenCentral() }
+configurations { junitConsole }
+
+dependencies {
+    minecraft 'com.mojang:minecraft:26.3'
+    implementation "net.fabricmc:fabric-loader:${findProperty('loaderVersion') ?: '0.19.5'}"
+    implementation "${findProperty('fabricApiGroup') ?: 'net.fabricmc.fabric-api'}:fabric-api:${findProperty('fabricApiVersion') ?: '0.165.0+26.3'}"
+    implementation files('vendor/toms_storage_fabric-26.3-2.12.2.jar')
+    compileOnly files('vendor/cloth-config-fabric-26.3.159.jar')
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    junitConsole 'org.junit.platform:junit-platform-console-standalone:1.13.4'
+    if (project.hasProperty('compatPack')) { runtimeOnly fileTree('vendor/compat') { include '*.jar' } }
+    if (project.hasProperty('fullPack')) { runtimeOnly fileTree('vendor/pack-runtime') { include '*.jar'; if(project.hasProperty('large'))exclude '*e4mc*' } }
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(25) }
+    withSourcesJar()
+}
+tasks.withType(JavaCompile).configureEach { options.release = 25; options.encoding = 'UTF-8' }
+test { useJUnitPlatform(); maxHeapSize = '768m' }
+// The Windows Java launcher reads Gradle worker @files using the native code page.
+// Run the identical JUnit engine directly when the project path contains Unicode.
+def unicodeWindows = System.getProperty('os.name').startsWith('Windows') && projectDir.path.any { (int) it > 127 }
+tasks.named('test') { onlyIf { !unicodeWindows } }
+tasks.register('unicodePathTest', Exec) {
+    dependsOn testClasses
+    onlyIf { unicodeWindows }
+    workingDir projectDir
+    doFirst {
+        executable javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }.get().executablePath.asFile
+        args '-Xmx768m', '-jar', configurations.junitConsole.singleFile, 'execute',
+                '--class-path', sourceSets.test.output.classesDirs.asPath,
+                '--class-path', sourceSets.main.output.classesDirs.asPath,
+                '--scan-class-path', '--reports-dir', layout.buildDirectory.dir('test-results/test').get().asFile,
+                '--disable-ansi-colors', '--fail-if-no-tests'
+    }
+}
+tasks.named('check') { dependsOn 'unicodePathTest' }
+tasks.register('writeRuntimeClasspath') {
+    doLast {
+        layout.buildDirectory.file('runtime-classpath.txt').get().asFile.text = sourceSets.main.runtimeClasspath.asPath
+    }
+}
+sourceSets {
+    launcher { }
+    gametest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+    clienttest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+    scaletest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+dependencies {
+    // Newer production API bundles omit the development-only GameTest module.
+    gametestImplementation('net.fabricmc.fabric-api:fabric-gametest-api-v1:4.0.34+3434d6d95d') { transitive = false }
+    clienttestImplementation('net.fabricmc.fabric-api:fabric-client-gametest-api-v1:6.0.10+131f8d475d') { transitive = false }
+}
+loom {
+    mods {
+        toms_virtual_storage { sourceSet sourceSets.main }
+        tpc_gametest { sourceSet sourceSets.gametest }
+        tpc_clienttest { sourceSet sourceSets.clienttest }
+        tvsn_scale { sourceSet sourceSets.scaletest }
+    }
+    runs {
+        scale {
+            server()
+            source sourceSets.scaletest
+            runDir "run/${project.findProperty('scaleProfile') ?: 'tvsn-scale'}"
+            vmArg "-Dtvsn.scaleProfile=${project.findProperty('scaleReportLabel') ?: (project.findProperty('scaleProfile') ?: 'tvsn-scale')}"
+            vmArg "-Dtvsn.scaleTicks=${project.findProperty('scaleTicks') ?: '300'}"
+            if(project.hasProperty('crashBoundary'))vmArg '-Dtvsn.crashBoundary=true'
+            if(project.hasProperty('queuedRestart'))vmArg '-Dtvsn.queuedRestart=true'
+            if(project.hasProperty('large')){
+                vmArg '-Dtvsn.large=true'
+                vmArg "-Dtvsn.largePerDimension=${project.findProperty('largePerDimension') ?: '100000'}"
+                vmArg "-Dtvsn.largePlayers=${project.findProperty('largePlayers') ?: '12'}"
+                if(project.hasProperty('largeResume'))vmArg '-Dtvsn.largeResume=true'
+                if(project.hasProperty('restartExpectedPerDimension'))vmArg "-Dtvsn.restartExpectedPerDimension=${project.property('restartExpectedPerDimension')}"
+            }
+            vmArg '-XX:ActiveProcessorCount=4'
+            vmArg '-Xms1G'
+            vmArg (project.hasProperty('large') ? '-Xmx8G' : '-Xmx4G')
+        }
+        gametest {
+            server()
+            name 'TPC isolated server GameTest'
+            source sourceSets.gametest
+            runDir project.findProperty('testRunDir') ?: (project.hasProperty('fullPack') ? 'run/compat' : 'run/gametest')
+            vmArg '-Dfabric-api.gametest'
+            vmArg "-Dfabric-api.gametest.report-file=../../build/gametest-${project.findProperty('testLabel') ?: (project.hasProperty('fullPack') ? 'pack' : 'baseline')}-results.xml"
+            vmArg "-Dtpc.testProfile=${project.findProperty('testLabel') ?: (project.hasProperty('fullPack') ? 'pack' : 'baseline')}"
+            vmArg '-Xmx2G'
+        }
+        clientSmoke {
+            client()
+            name 'TPC isolated client and integrated server test'
+            source sourceSets.clienttest
+            runDir 'run/client-smoke'
+            vmArg '-Dfabric.client.gametest'
+            vmArg '-Dfabric.client.gametest.modid=tpc_clienttest'
+            vmArg '-XX:ActiveProcessorCount=4'
+            vmArg '-XX:ErrorFile=hs_err_pid%p.log'
+            if(project.hasProperty('clientInterpreter'))vmArg '-Xint'
+            if(!project.hasProperty('clientFullCompiler') && !project.hasProperty('clientInterpreter'))vmArg '-XX:TieredStopAtLevel=1'
+            vmArg '-Xmx2G'
+        }
+    }
+}
+['runGametest', 'runClientSmoke', 'runScale'].each { taskName ->
+    tasks.named(taskName, JavaExec) {
+        dependsOn tasks.named('launcherClasses')
+        classpath += sourceSets.launcher.output
+        mainClass.set('dev.tpc.testlauncher.ExpandedClasspathMain')
+    }
+}
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+tasks.named('jar') { from('LICENSE', 'LICENSE-Tom-Storage.txt', 'THIRD_PARTY_NOTICES.md') }
+tasks.named('sourcesJar') { from('LICENSE', 'LICENSE-Tom-Storage.txt', 'THIRD_PARTY_NOTICES.md') }

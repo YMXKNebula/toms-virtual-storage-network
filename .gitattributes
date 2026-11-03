@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.java text eol=lf
+*.json text eol=lf
+*.gradle text eol=lf
+*.md text eol=lf
+*.ps1 text eol=lf
+*.tsv text eol=lf whitespace=-blank-at-eol
+gradlew text eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jar binary

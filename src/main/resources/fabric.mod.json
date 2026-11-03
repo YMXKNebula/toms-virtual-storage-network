@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "toms_virtual_storage",
+  "version": "${version}",
+  "name": "Tom's Virtual Storage Network",
+  "icon": "assets/toms_virtual_storage/textures/block/tom_barrel_active.png",
+  "description": "Virtual barrel warehouses and persistent cable networks for Tom's Simple Storage.",
+  "contact": {
+    "homepage": "https://github.com/YMXKNebula/toms-virtual-storage-network",
+    "sources": "https://github.com/YMXKNebula/toms-virtual-storage-network",
+    "issues": "https://github.com/YMXKNebula/toms-virtual-storage-network/issues"
+  },
+  "environment": "*",
+  "license": "MIT",
+  "entrypoints": { "main": ["dev.tpc.PersistentCables"] },
+  "mixins": ["toms_persistent_cables.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3",
+    "java": ">=25",
+    "fabric-api": ">=0.165.0+26.3",
+    "toms_storage": "2.12.2"
+  },
+  "breaks": { "toms_persistent_cables": "*", "toms_event_optimizer": "*" }
+}

@@ -1,0 +1,16 @@
+{
+  "enablePersistentNetwork": true,
+  "maxTopologyUpdatesPerTick": 256,
+  "maxGraphNodesProcessedPerTick": 4096,
+  "maxTopologyProcessingTimeMs": 2.0,
+  "immediateGraphNodes": 64,
+  "maxCachedQueries": 256,
+  "maxResidentRuns": 250000,
+  "maxQueuedPositions": 8192,
+  "enableDiagnostics": false,
+  "maxOverflowEntitiesPerTick": 16,
+  "unchangedScansBeforeIdle": 3,
+  "checkpointIntervalTicks": 6000,
+  "checkpointNodesPerTick": 64,
+  "maxCheckpointTailBytes": 67108864
+}

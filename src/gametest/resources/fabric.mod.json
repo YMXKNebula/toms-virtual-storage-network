@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "tpc_gametest",
+  "version": "1.0.0",
+  "name": "TPC development integration tests",
+  "environment": "server",
+  "entrypoints": { "fabric-gametest": ["dev.tpc.integration.CableGameTests", "dev.tpc.integration.DoubleChestGameTests", "dev.tpc.integration.VirtualGameTests", "dev.tpc.integration.WarehouseIntegrationTests", "dev.tpc.integration.NativeAutomationTests", "dev.tpc.integration.RegressionGameTests", "dev.tpc.integration.ConnectorEntryGameTests"], "main": ["dev.tpc.integration.TestMetrics"] },
+  "mixins": ["tpc_gametest.mixins.json"],
+  "depends": { "toms_virtual_storage": "*" }
+}

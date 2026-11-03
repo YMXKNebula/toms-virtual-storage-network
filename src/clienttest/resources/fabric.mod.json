@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "tpc_clienttest",
+  "version": "1.0.0",
+  "name": "TPC isolated client tests",
+  "environment": "client",
+  "entrypoints": { "fabric-client-gametest": ["dev.tpc.clienttest.ClientSmokeTest"] },
+  "mixins": ["tpc_clienttest.mixins.json"],
+  "depends": { "toms_virtual_storage": "*" }
+}

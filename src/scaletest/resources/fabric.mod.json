@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"tvsn_scale","version":"1","name":"TVSN isolated scale test","environment":"server","entrypoints":{"main":["dev.tpc.scale.ScaleRun","dev.tpc.scale.CrashBoundaryRun","dev.tpc.scale.LargeRun","dev.tpc.scale.QueuedRestartRun"]},"mixins":["tvsn-scale.mixins.json"],"depends":{"toms_virtual_storage":"*"}}

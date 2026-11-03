@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.tpc.integration.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["XaeroGameTestLifecycleMixin", "TerminalTestAccess", "ConnectorPublicationTestMixin", "ConnectorTickTestMixin"],
+  "injectors": { "defaultRequire": 1 }
+}
